@@ -1,5 +1,7 @@
 package concourse
 
+import "time"
+
 type CheckRequest struct {
 	Source  Source   `json:"source"`
 	Version *Version `json:"version"`
@@ -27,15 +29,16 @@ type Source struct {
 	Host     string `json:"host"`
 	Insecure bool   `json:"insecure,omitempty"`
 	App      string `json:"app"`
-	Username string `json:"username"`
+	Project  string `json:"project,omitempty"`
 	Token    string `json:"token"`
 	Debug    bool   `json:"debug,omitempty"`
 }
 
 type Version struct {
-	SyncWindow string `json:"syncWindow,omitempty"`
-	Revision   string `json:"revision,omitempty"`
-	Health     string `json:"health,omitempty"`
+	Revision   string    `json:"revision"`
+	DeployedAt time.Time `json:"deployed_at"`
+	Health     string    `json:"health"`
+	SyncStatus string    `json:"sync_status"`
 }
 
 type MetadataField struct {
