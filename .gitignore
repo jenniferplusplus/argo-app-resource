@@ -1,3 +1,4 @@
+# golang stuff
 *.exe
 *.exe~
 *.dll
@@ -6,6 +7,14 @@
 *.test
 *.out
 go.work
-*.secret
 
+# editor stuff
 .idea/
+
+# development stuff
+*.secret
+secret.*
+*.secret.*
+*.local
+local.*
+*.local.*

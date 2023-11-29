@@ -7,7 +7,7 @@ import (
 	"github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 )
 
-func (c *Command) Check() error {
+func (c *Task) Check() error {
 	setupLogging(c.stderr)
 
 	var req CheckRequest
@@ -54,7 +54,7 @@ func (c *Command) Check() error {
 
 	err = json.NewEncoder(c.stdout).Encode(versions)
 	if err != nil {
-		return fmt.Errorf("could not serialize status JSON: %s", err)
+		return fmt.Errorf("could not serialize versions: %s", err)
 	}
 
 	return nil

@@ -2,20 +2,20 @@ package concourse
 
 import "io"
 
-type Command struct {
+type Task struct {
 	stdin  io.Reader
 	stderr io.Writer
 	stdout io.Writer
 	args   []string
 }
 
-func NewCommand(
+func NewTask(
 	stdin io.Reader,
 	stderr io.Writer,
 	stdout io.Writer,
 	args []string,
-) *Command {
-	return &Command{
+) *Task {
+	return &Task{
 		stdin:  stdin,
 		stderr: stderr,
 		stdout: stdout,
