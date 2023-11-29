@@ -51,12 +51,42 @@ func NewClient(conn *Connection) (*Client, error) {
 }
 
 func (c *Client) GetApplication(name string) (*v1alpha1.Application, error) {
-	return c.GetApplicationWithProject(name, "default")
+	return c.appClient.Get(context.Background(), &application.ApplicationQuery{
+		Name: &name,
+	})
 }
 
 func (c *Client) GetApplicationWithProject(name string, project string) (*v1alpha1.Application, error) {
 	return c.appClient.Get(context.Background(), &application.ApplicationQuery{
 		Name:    &name,
 		Project: []string{project},
+	})
+}
+
+func (c *Client) SyncApplicationRevision(name string, revision string) (*v1alpha1.Application, error) {
+	return c.appClient.Sync(context.Background(), &application.ApplicationSyncRequest{
+		Name:     &name,
+		Revision: &revision,
+	})
+}
+
+func (c *Client) SyncApplicationLatest(name string) (*v1alpha1.Application, error) {
+	return c.appClient.Sync(context.Background(), &application.ApplicationSyncRequest{
+		Name: &name,
+	})
+}
+
+func (c *Client) SyncApplicationRevisionWithProject(name string, revision string, project string) (*v1alpha1.Application, error) {
+	return c.appClient.Sync(context.Background(), &application.ApplicationSyncRequest{
+		Name:     &name,
+		Revision: &revision,
+		Project:  &project,
+	})
+}
+
+func (c *Client) SyncApplicationLatestWithProject(name string, project string) (*v1alpha1.Application, error) {
+	return c.appClient.Sync(context.Background(), &application.ApplicationSyncRequest{
+		Name:    &name,
+		Project: &project,
 	})
 }

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	"os"
+	"path/filepath"
 )
 
 func (task *Task) Get() error {
@@ -17,6 +19,7 @@ func (task *Task) Get() error {
 	if err != nil {
 		return fmt.Errorf("invalid payload: %s", err)
 	}
+	dest := task.args[1]
 
 	connection := argocd.Connection{
 		Address: req.Source.Host,
@@ -71,7 +74,16 @@ func (task *Task) Get() error {
 		Metadata: meta,
 	}
 
+	err = saveVersion(dest, &version)
+
+	err = saveRevisionHistory(dest, application)
+	if err != nil {
+		return err
+	}
 	err = json.NewEncoder(task.stdout).Encode(response)
+	if err != nil {
+		return err
+	}
 	if err != nil {
 		return fmt.Errorf("could not serialize response: %s", err)
 	}
@@ -81,4 +93,34 @@ func (task *Task) Get() error {
 
 func resourceMetaKey(status *v1alpha1.ResourceStatus, key string) string {
 	return fmt.Sprintf("%s %s (%s/%s/%s)", status.Name, key, status.Kind, status.Version, status.Namespace)
+}
+
+func saveVersion(dest string, version *Version) error {
+	f, err := os.Create(filepath.Join(dest, "version.json"))
+	if err != nil {
+		return fmt.Errorf("cannot write to file %s", filepath.Join(dest, "version.json"))
+	}
+	defer f.Close()
+
+	err = json.NewEncoder(f).Encode(version)
+	if err != nil {
+		return fmt.Errorf("could not serialize version to file: %w", err)
+	}
+
+	return nil
+}
+
+func saveRevisionHistory(dest string, application *v1alpha1.Application) error {
+	f, err := os.Create(filepath.Join(dest, "history.json"))
+	if err != nil {
+		return fmt.Errorf("cannot write to file %s", filepath.Join(dest, "history.json"))
+	}
+	defer f.Close()
+
+	err = json.NewEncoder(f).Encode(application.Status.History)
+	if err != nil {
+		return fmt.Errorf("could not serialize version to file: %w", err)
+	}
+
+	return nil
 }

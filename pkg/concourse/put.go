@@ -39,6 +39,8 @@ func (task *Task) Put() error {
 		return fmt.Errorf("can't load the application: %s", err)
 	}
 
+	//application
+
 	version := Version{
 		Revision:   application.Status.Sync.Revision,
 		DeployedAt: application.Status.OperationState.StartedAt.UTC(),
