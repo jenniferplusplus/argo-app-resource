@@ -1,6 +1,8 @@
 package concourse
 
-import "time"
+import (
+	"time"
+)
 
 type CheckRequest struct {
 	Source  Source   `json:"source"`
@@ -10,9 +12,9 @@ type CheckRequest struct {
 type CheckResponse []Version
 
 type GetRequest struct {
-	Source  Source    `json:"source"`
-	Params  GetParams `json:"params"`
-	Version Version   `json:"version"`
+	Source  Source     `json:"source"`
+	Params  *GetParams `json:"params"`
+	Version *Version   `json:"version"`
 }
 
 type Response struct {
@@ -42,20 +44,13 @@ type Version struct {
 }
 
 type MetadataField struct {
-	Group     string `json:"group,omitempty"`
-	Kind      string `json:"kind,omitempty"`
-	Namespace string `json:"namespace,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Status    string `json:"status,omitempty"`
-	Health    string `json:"health,omitempty"`
-	Hook      string `json:"hook,omitempty"`
-	Message   string `json:"message,omitempty"`
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
-// TODO
 type GetParams struct {
-	RawFormat    string `json:"format"`
-	SkipDownload bool   `json:"skip_download"`
+	Health     string `json:"health"`
+	SyncStatus string `json:"sync_status"`
 }
 
 type PutParams struct {

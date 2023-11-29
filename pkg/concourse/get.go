@@ -7,10 +7,10 @@ import (
 	"github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 )
 
-func (task *Task) Check() error {
+func (task *Task) Get() error {
 	setupLogging(task.stderr)
 
-	var req CheckRequest
+	var req GetRequest
 	decoder := json.NewDecoder(task.stdin)
 	decoder.DisallowUnknownFields()
 	err := decoder.Decode(&req)
@@ -45,17 +45,40 @@ func (task *Task) Check() error {
 		Health:     string(application.Status.Health.Status),
 		SyncStatus: string(application.Status.Sync.Status),
 	}
-	var versions []Version
-	versions = append(versions, version)
 
-	if len(versions) == 0 {
-		return fmt.Errorf("couldn't get application status")
+	if req.Params != nil && req.Params.Health != "" && version.Health != req.Params.Health {
+		return fmt.Errorf("current application health is %s, required %s", version.Health, req.Params.Health)
 	}
 
-	err = json.NewEncoder(task.stdout).Encode(versions)
+	if req.Params != nil && req.Params.SyncStatus != "" && version.SyncStatus != req.Params.SyncStatus {
+		return fmt.Errorf("current application state is %s, required %s", version.SyncStatus, req.Params.SyncStatus)
+	}
+
+	meta := make([]MetadataField, 0)
+
+	for _, resource := range application.Status.Resources {
+		meta = append(meta, MetadataField{
+			Key:   resourceMetaKey(&resource, "status"),
+			Value: string(resource.Status),
+		}, MetadataField{
+			Key:   resourceMetaKey(&resource, "health"),
+			Value: string(resource.Health.Status),
+		})
+	}
+
+	response := Response{
+		Version:  version,
+		Metadata: meta,
+	}
+
+	err = json.NewEncoder(task.stdout).Encode(response)
 	if err != nil {
-		return fmt.Errorf("could not serialize versions: %s", err)
+		return fmt.Errorf("could not serialize response: %s", err)
 	}
 
 	return nil
+}
+
+func resourceMetaKey(status *v1alpha1.ResourceStatus, key string) string {
+	return fmt.Sprintf("%s %s (%s/%s/%s)", status.Name, key, status.Kind, status.Version, status.Namespace)
 }
