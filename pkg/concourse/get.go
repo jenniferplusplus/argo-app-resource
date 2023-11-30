@@ -75,15 +75,16 @@ func (task *Task) Get() error {
 	}
 
 	err = saveVersion(dest, &version)
+	if err != nil {
+		return err
+	}
 
 	err = saveRevisionHistory(dest, application)
 	if err != nil {
 		return err
 	}
+
 	err = json.NewEncoder(task.stdout).Encode(response)
-	if err != nil {
-		return err
-	}
 	if err != nil {
 		return fmt.Errorf("could not serialize response: %s", err)
 	}
