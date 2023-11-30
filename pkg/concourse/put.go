@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	"time"
 )
 
 func (task *Task) Put() error {
 	setupLogging(task.stderr)
 
-	var req GetRequest
+	var req PutRequest
 	decoder := json.NewDecoder(task.stdin)
 	decoder.DisallowUnknownFields()
 	err := decoder.Decode(&req)
@@ -23,41 +24,44 @@ func (task *Task) Put() error {
 		Token:   req.Source.Token,
 	}
 
+	var application *v1alpha1.Application
 	client, err := argocd.NewClient(&connection)
 	if err != nil {
 		return fmt.Errorf("can't create client: %s", err)
 	}
 
-	var application *v1alpha1.Application
 	if req.Source.Project == "" {
-		application, err = client.GetApplication(req.Source.App)
+		if req.Params.RollbackRevision == "" {
+			application, err = client.SyncApplicationLatest(req.Source.App)
+		} else {
+			application, err = client.SyncApplicationRevision(req.Source.App, req.Params.RollbackRevision)
+		}
 	} else {
-		application, err = client.GetApplicationWithProject(req.Source.App, req.Source.Project)
+		if req.Params.RollbackRevision == "" {
+			application, err = client.SyncApplicationLatestWithProject(req.Source.App, req.Source.Project)
+		} else {
+			application, err = client.SyncApplicationRevisionWithProject(req.Source.App, req.Params.RollbackRevision, req.Source.Project)
+		}
 	}
 
 	if err != nil {
-		return fmt.Errorf("can't load the application: %s", err)
+		return fmt.Errorf("can't sync the application: %s", err)
 	}
-
-	//application
 
 	version := Version{
 		Revision:   application.Status.Sync.Revision,
-		DeployedAt: application.Status.OperationState.StartedAt.UTC(),
+		DeployedAt: time.Now().UTC(),
 		Health:     string(application.Status.Health.Status),
 		SyncStatus: string(application.Status.Sync.Status),
 	}
 	meta := make([]MetadataField, 0)
 
-	//for _, resource := range application.Status.Resources {
-	//	meta = append(meta, MetadataField{
-	//		Key:   resourceSyncKey(&resource),
-	//		Value: string(resource.Status),
-	//	}, MetadataField{
-	//		Key:   resourceHealthKey(&resource),
-	//		Value: string(resource.Health.Status),
-	//	})
-	//}
+	for _, resource := range application.Status.Resources {
+		meta = append(meta, MetadataField{
+			Key:   resourceMetaKey(&resource),
+			Value: fmt.Sprintf("%s/%s", resource.Status, resource.Health.Status),
+		})
+	}
 
 	response := Response{
 		Version:  version,

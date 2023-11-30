@@ -61,11 +61,8 @@ func (task *Task) Get() error {
 
 	for _, resource := range application.Status.Resources {
 		meta = append(meta, MetadataField{
-			Key:   resourceMetaKey(&resource, "status"),
-			Value: string(resource.Status),
-		}, MetadataField{
-			Key:   resourceMetaKey(&resource, "health"),
-			Value: string(resource.Health.Status),
+			Key:   resourceMetaKey(&resource),
+			Value: fmt.Sprintf("%s/%s", resource.Status, resource.Health.Status),
 		})
 	}
 
@@ -92,23 +89,29 @@ func (task *Task) Get() error {
 	return nil
 }
 
-func resourceMetaKey(status *v1alpha1.ResourceStatus, key string) string {
-	return fmt.Sprintf("%s %s (%s/%s/%s)", status.Name, key, status.Kind, status.Version, status.Namespace)
+func resourceMetaKey(status *v1alpha1.ResourceStatus) string {
+	return fmt.Sprintf(
+		"%s.%s(%s/%s)",
+		status.Name,
+		status.Namespace,
+		status.Kind,
+		status.Version,
+	)
 }
 
-func saveVersion(dest string, version *Version) error {
+func saveVersion(dest string, version *Version) (err error) {
 	f, err := os.Create(filepath.Join(dest, "version.json"))
 	if err != nil {
 		return fmt.Errorf("cannot write to file %s", filepath.Join(dest, "version.json"))
 	}
-	defer f.Close()
+	defer closeFile(f, &err)
 
 	err = json.NewEncoder(f).Encode(version)
 	if err != nil {
 		return fmt.Errorf("could not serialize version to file: %w", err)
 	}
 
-	return nil
+	return err
 }
 
 func saveRevisionHistory(dest string, application *v1alpha1.Application) error {
@@ -116,12 +119,19 @@ func saveRevisionHistory(dest string, application *v1alpha1.Application) error {
 	if err != nil {
 		return fmt.Errorf("cannot write to file %s", filepath.Join(dest, "history.json"))
 	}
-	defer f.Close()
+	defer closeFile(f, &err)
 
 	err = json.NewEncoder(f).Encode(application.Status.History)
 	if err != nil {
-		return fmt.Errorf("could not serialize version to file: %w", err)
+		return fmt.Errorf("could not serialize history to file: %w", err)
 	}
 
 	return nil
+}
+
+func closeFile(f *os.File, err *error) {
+	c := f.Close()
+	if err == nil {
+		err = &c
+	}
 }
