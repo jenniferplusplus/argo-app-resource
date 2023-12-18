@@ -10,23 +10,17 @@ import (
 )
 
 func (task *Task) Get() error {
-	setupLogging(task.stderr)
-
-	var req GetRequest
+	req := DefaultGetRequest()
 	decoder := json.NewDecoder(task.stdin)
 	decoder.DisallowUnknownFields()
-	err := decoder.Decode(&req)
+	err := decoder.Decode(req)
 	if err != nil {
 		return fmt.Errorf("invalid payload: %s", err)
 	}
+	setupLogging(task.stderr, req.Params.Debug)
 	dest := task.args[1]
 
-	connection := argocd.Connection{
-		Address: req.Source.Host,
-		Token:   req.Source.Token,
-	}
-
-	client, err := argocd.NewClient(&connection)
+	client, err := argocd.NewClient(&req.Source)
 	if err != nil {
 		return fmt.Errorf("can't create client: %s", err)
 	}
@@ -59,10 +53,10 @@ func (task *Task) Get() error {
 
 	meta := make([]MetadataField, 0)
 
-	for _, resource := range application.Status.Resources {
+	for _, res := range application.Status.Resources {
 		meta = append(meta, MetadataField{
-			Key:   resourceMetaKey(&resource),
-			Value: fmt.Sprintf("%s/%s", resource.Status, resource.Health.Status),
+			Key:   resourceMetaKey(&res),
+			Value: fmt.Sprintf("%s", res.Status),
 		})
 	}
 

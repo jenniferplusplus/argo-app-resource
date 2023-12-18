@@ -9,23 +9,18 @@ import (
 )
 
 func (task *Task) Put() error {
-	setupLogging(task.stderr)
 
-	var req PutRequest
+	req := DefaultPutRequest()
 	decoder := json.NewDecoder(task.stdin)
 	decoder.DisallowUnknownFields()
 	err := decoder.Decode(&req)
 	if err != nil {
 		return fmt.Errorf("invalid payload: %s", err)
 	}
-
-	connection := argocd.Connection{
-		Address: req.Source.Host,
-		Token:   req.Source.Token,
-	}
+	setupLogging(task.stderr, req.Params.Debug)
 
 	var application *v1alpha1.Application
-	client, err := argocd.NewClient(&connection)
+	client, err := argocd.NewClient(&req.Source)
 	if err != nil {
 		return fmt.Errorf("can't create client: %s", err)
 	}

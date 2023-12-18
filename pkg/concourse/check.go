@@ -8,9 +8,9 @@ import (
 )
 
 func (task *Task) Check() error {
-	setupLogging(task.stderr)
+	setupLogging(task.stderr, true)
 
-	var req CheckRequest
+	req := DefaultCheckRequest()
 	decoder := json.NewDecoder(task.stdin)
 	decoder.DisallowUnknownFields()
 	err := decoder.Decode(&req)
@@ -18,12 +18,7 @@ func (task *Task) Check() error {
 		return fmt.Errorf("invalid payload: %s", err)
 	}
 
-	connection := argocd.Connection{
-		Address: req.Source.Host,
-		Token:   req.Source.Token,
-	}
-
-	client, err := argocd.NewClient(&connection)
+	client, err := argocd.NewClient(&req.Source)
 	if err != nil {
 		return fmt.Errorf("can't create client: %s", err)
 	}

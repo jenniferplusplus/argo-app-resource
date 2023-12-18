@@ -1,8 +1,8 @@
 package argocd
 
 import (
+	"argo-app-resource/pkg/resource"
 	"context"
-	"fmt"
 	"github.com/argoproj/argo-cd/v2/pkg/apiclient"
 	"github.com/argoproj/argo-cd/v2/pkg/apiclient/application"
 	"github.com/argoproj/argo-cd/v2/pkg/apiclient/cluster"
@@ -10,22 +10,18 @@ import (
 	"github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 )
 
-type Connection struct {
-	Address string
-	Token   string
-}
-
 type Client struct {
 	projectClient project.ProjectServiceClient
 	clusterClient cluster.ClusterServiceClient
 	appClient     application.ApplicationServiceClient
 }
 
-func NewClient(conn *Connection) (*Client, error) {
+func NewClient(conn *resource.Source) (*Client, error) {
 	apiClient, err := apiclient.NewClient(&apiclient.ClientOptions{
-		ServerAddr: fmt.Sprintf(conn.Address),
-		Insecure:   true,
+		ServerAddr: conn.Host,
+		Insecure:   conn.Insecure,
 		AuthToken:  conn.Token,
+		GRPCWeb:    conn.UseGrpcWeb,
 	})
 	if err != nil {
 		return nil, err
