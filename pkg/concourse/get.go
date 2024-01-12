@@ -103,6 +103,11 @@ func resourceMetaKey(status *v1alpha1.ResourceStatus) string {
 }
 
 func saveVersion(dest string, version *Version) (err error) {
+	err = os.MkdirAll(dest, 0777)
+	if err != nil {
+		return fmt.Errorf("cannot write to dest path %s", dest)
+	}
+
 	f, err := os.Create(filepath.Join(dest, "version.json"))
 	if err != nil {
 		return fmt.Errorf("cannot write to file %s", filepath.Join(dest, "version.json"))
@@ -118,6 +123,11 @@ func saveVersion(dest string, version *Version) (err error) {
 }
 
 func saveApplication(dest string, application *v1alpha1.Application) error {
+	err := os.MkdirAll(dest, 0777)
+	if err != nil {
+		return fmt.Errorf("cannot write to dest path %s", dest)
+	}
+
 	f, err := os.Create(filepath.Join(dest, "history.json"))
 	if err != nil {
 		return fmt.Errorf("cannot write to file %s", filepath.Join(dest, "history.json"))
@@ -135,7 +145,7 @@ func saveApplication(dest string, application *v1alpha1.Application) error {
 	}
 	defer closeFile(app, &err)
 
-	err = json.NewEncoder(f).Encode(application)
+	err = json.NewEncoder(app).Encode(*application)
 	if err != nil {
 		return fmt.Errorf("could not serialize application to file: %w", err)
 	}
