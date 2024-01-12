@@ -15,4 +15,4 @@ FROM alpine:3.18 as resource
 COPY --from=builder assets/ /opt/resource/
 RUN chmod +x /opt/resource/*
 
-USER 1001:1001
+USER root
