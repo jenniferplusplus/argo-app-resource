@@ -20,6 +20,8 @@ func (task *Task) Get() error {
 	}
 	setupLogging(task.stderr, req.Params.Debug)
 	dest := task.args[1]
+	logrus.Debugf("args %s", task.args)
+	logrus.Infof("Dest %s", dest)
 
 	client, err := argocd.NewClient(&req.Source)
 	if err != nil {
@@ -71,7 +73,7 @@ func (task *Task) Get() error {
 		logrus.Error(err)
 	}
 
-	err = saveRevisionHistory(dest, application)
+	err = saveApplication(dest, application)
 	if err != nil {
 		logrus.Error(err)
 	}
@@ -115,7 +117,7 @@ func saveVersion(dest string, version *Version) (err error) {
 	return err
 }
 
-func saveRevisionHistory(dest string, application *v1alpha1.Application) error {
+func saveApplication(dest string, application *v1alpha1.Application) error {
 	f, err := os.Create(filepath.Join(dest, "history.json"))
 	if err != nil {
 		return fmt.Errorf("cannot write to file %s", filepath.Join(dest, "history.json"))
@@ -125,6 +127,17 @@ func saveRevisionHistory(dest string, application *v1alpha1.Application) error {
 	err = json.NewEncoder(f).Encode(application.Status.History)
 	if err != nil {
 		return fmt.Errorf("could not serialize history to file: %w", err)
+	}
+
+	app, err := os.Create(filepath.Join(dest, "application.json"))
+	if err != nil {
+		return fmt.Errorf("cannot write to file %s", filepath.Join(dest, "application.json"))
+	}
+	defer closeFile(app, &err)
+
+	err = json.NewEncoder(f).Encode(application)
+	if err != nil {
+		return fmt.Errorf("could not serialize application to file: %w", err)
 	}
 
 	return nil
