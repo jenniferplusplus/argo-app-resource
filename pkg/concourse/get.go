@@ -56,7 +56,7 @@ func (task *Task) Get() error {
 
 	for _, res := range application.Status.Resources {
 		meta = append(meta, MetadataField{
-			Key:   resourceMetaKey(&res),
+			Name:  resourceMetaKey(&res),
 			Value: fmt.Sprintf("%s", res.Status),
 		})
 	}

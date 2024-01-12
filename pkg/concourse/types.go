@@ -36,7 +36,7 @@ type Version struct {
 }
 
 type MetadataField struct {
-	Key   string `json:"key"`
+	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 

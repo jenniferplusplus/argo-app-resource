@@ -53,7 +53,7 @@ func (task *Task) Put() error {
 
 	for _, resource := range application.Status.Resources {
 		meta = append(meta, MetadataField{
-			Key:   resourceMetaKey(&resource),
+			Name:  resourceMetaKey(&resource),
 			Value: fmt.Sprintf("%s/%s", resource.Status, resource.Health.Status),
 		})
 	}
