@@ -85,12 +85,18 @@ func (task *Task) Get() error {
 }
 
 func resourceMetaKey(status *v1alpha1.ResourceStatus) string {
+	var ns string
+	if status.Namespace != "" {
+		ns = status.Namespace
+	} else {
+		ns = "_"
+	}
 	return fmt.Sprintf(
-		"%s.%s(%s/%s)",
-		status.Name,
-		status.Namespace,
+		"%s/%s.%s.%s",
 		status.Kind,
 		status.Version,
+		ns,
+		status.Name,
 	)
 }
 
