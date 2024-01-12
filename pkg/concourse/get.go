@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	"github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 )
@@ -67,12 +68,12 @@ func (task *Task) Get() error {
 
 	err = saveVersion(dest, &version)
 	if err != nil {
-		return err
+		logrus.Error(err)
 	}
 
 	err = saveRevisionHistory(dest, application)
 	if err != nil {
-		return err
+		logrus.Error(err)
 	}
 
 	err = json.NewEncoder(task.stdout).Encode(response)
