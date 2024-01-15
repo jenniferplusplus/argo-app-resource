@@ -35,6 +35,10 @@ type Version struct {
 	SyncStatus string    `json:"sync_status"`
 }
 
+type MetadataFieldValue struct {
+	Health string `json:"health"`
+}
+
 type MetadataField struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`

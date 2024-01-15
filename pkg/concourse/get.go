@@ -57,9 +57,10 @@ func (task *Task) Get() error {
 	meta := make([]MetadataField, 0)
 
 	for _, res := range application.Status.Resources {
+
 		meta = append(meta, MetadataField{
 			Name:  resourceMetaKey(&res),
-			Value: fmt.Sprintf("%s", res.Status),
+			Value: resourceMetaValue(&res),
 		})
 	}
 
@@ -69,6 +70,11 @@ func (task *Task) Get() error {
 	}
 
 	err = saveVersion(dest, &version)
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	err = saveResources(dest, &meta)
 	if err != nil {
 		logrus.Error(err)
 	}
@@ -102,6 +108,16 @@ func resourceMetaKey(status *v1alpha1.ResourceStatus) string {
 	)
 }
 
+func resourceMetaValue(status *v1alpha1.ResourceStatus) string {
+	var message string
+	if status.Health == nil {
+		message = fmt.Sprintf("%s", status.Status)
+	} else {
+		message = fmt.Sprintf("%s/%s", status.Status, status.Health.Status)
+	}
+	return message
+}
+
 func saveVersion(dest string, version *Version) (err error) {
 	err = os.MkdirAll(dest, 0777)
 	if err != nil {
@@ -122,21 +138,30 @@ func saveVersion(dest string, version *Version) (err error) {
 	return err
 }
 
-func saveApplication(dest string, application *v1alpha1.Application) error {
-	err := os.MkdirAll(dest, 0777)
+func saveResources(dest string, resources *[]MetadataField) (err error) {
+	err = os.MkdirAll(dest, 0777)
 	if err != nil {
 		return fmt.Errorf("cannot write to dest path %s", dest)
 	}
 
-	f, err := os.Create(filepath.Join(dest, "history.json"))
+	f, err := os.Create(filepath.Join(dest, "resources.json"))
 	if err != nil {
-		return fmt.Errorf("cannot write to file %s", filepath.Join(dest, "history.json"))
+		return fmt.Errorf("cannot write to file %s", filepath.Join(dest, "resources.json"))
 	}
 	defer closeFile(f, &err)
 
-	err = json.NewEncoder(f).Encode(application.Status.History)
+	err = json.NewEncoder(f).Encode(resources)
 	if err != nil {
-		return fmt.Errorf("could not serialize history to file: %w", err)
+		return fmt.Errorf("could not synced resources to file: %w", err)
+	}
+
+	return err
+}
+
+func saveApplication(dest string, application *v1alpha1.Application) error {
+	err := os.MkdirAll(dest, 0777)
+	if err != nil {
+		return fmt.Errorf("cannot write to dest path %s", dest)
 	}
 
 	app, err := os.Create(filepath.Join(dest, "application.json"))
